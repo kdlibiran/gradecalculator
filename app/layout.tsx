@@ -3,6 +3,12 @@
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { useState, useEffect } from "react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Grade Calculator",
+  description: "Calculate your grade based on your score and total score.",
+};
 
 export default function RootLayout({
   children,
