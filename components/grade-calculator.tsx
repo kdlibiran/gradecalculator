@@ -105,7 +105,7 @@ export function GradeCalculatorComponent() {
     <div className="container mx-auto p-4 max-w-2xl">
       <Card className="bg-background shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-3xl font-bold">Jebinks Grade Calculator</CardTitle>
+          <CardTitle className="text-3xl font-bold">Jebinks' Grade Calculator</CardTitle>
           <Button
             variant="ghost"
             size="icon"

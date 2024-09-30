@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Jebinks Grade Calculator</title>
+        <title>Jebinks' Grade Calculator</title>
         <meta name="description" content="Calculate your grade based on your score and total score." />
       </head>
       <body>
