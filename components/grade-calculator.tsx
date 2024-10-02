@@ -1,13 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Trash2, Moon, Sun } from "lucide-react"
+import { Plus, Trash2, Moon, Sun, Edit, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme } from "next-themes"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface ScoreEntry {
   id: number
@@ -25,6 +32,8 @@ export default function GradeCalculatorComponent() {
   const [newPassingScore, setNewPassingScore] = useState("")
   const [goalGrade, setGoalGrade] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [editingEntry, setEditingEntry] = useState<ScoreEntry | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { theme, setTheme } = useTheme()
 
   const addEntry = (e: React.FormEvent) => {
@@ -73,6 +82,27 @@ export default function GradeCalculatorComponent() {
     setEntries(entries.filter((entry) => entry.id !== id))
   }
 
+  const editEntry = (entry: ScoreEntry) => {
+    setEditingEntry(entry)
+  }
+
+  const saveEditedEntry = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingEntry) {
+      const updatedEntries = entries.map((entry) =>
+        entry.id === editingEntry.id ? editingEntry : entry
+      )
+      setEntries(updatedEntries)
+      setEditingEntry(null)
+      setIsDialogOpen(false)
+    }
+  }
+
+  const duplicateEntry = (entry: ScoreEntry) => {
+    const newEntry = { ...entry, id: Date.now() }
+    setEntries([...entries, newEntry])
+  }
+
   const calculateAdjustedGrade = (entry: ScoreEntry) => {
     const { score, total, passingScore } = entry
     if (score < passingScore) return 0
@@ -118,7 +148,7 @@ export default function GradeCalculatorComponent() {
   }, [totalWeight])
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
+    <div className="container mx-auto p-4 max-w-2xl h-screen overflow-auto">
       <Card className="bg-background shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl font-bold">Jebinks' Grade Calculator</CardTitle>
@@ -214,15 +244,77 @@ export default function GradeCalculatorComponent() {
                         Weighted %: {calculateWeightedPercentage(entry).toFixed(2)}%
                       </span>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => removeEntry(entry.id)} className="mt-2 sm:mt-0">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2 mt-2 sm:mt-0">
+                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="icon" onClick={() => editEntry(entry)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Score</DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={saveEditedEntry} className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <Label htmlFor="editScore">Score</Label>
+                                <Input
+                                  id="editScore"
+                                  type="number"
+                                  value={editingEntry?.score || ""}
+                                  onChange={(e) => setEditingEntry(prev => prev ? {...prev, score: parseFloat(e.target.value)} : null)}
+                                  required
+                                />
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <Label htmlFor="editTotal">Total</Label>
+                                <Input
+                                  id="editTotal"
+                                  type="number"
+                                  value={editingEntry?.total || ""}
+                                  onChange={(e) => setEditingEntry(prev => prev ? {...prev, total: parseFloat(e.target.value)} : null)}
+                                  required
+                                />
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <Label htmlFor="editPassingScore">Passing Score</Label>
+                                <Input
+                                  id="editPassingScore"
+                                  type="number"
+                                  value={editingEntry?.passingScore || ""}
+                                  onChange={(e) => setEditingEntry(prev => prev ? {...prev, passingScore: parseFloat(e.target.value)} : null)}
+                                  required
+                                />
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <Label htmlFor="editWeight">Weight (%)</Label>
+                                <Input
+                                  id="editWeight"
+                                  type="number"
+                                  value={editingEntry?.weight || ""}
+                                  onChange={(e) => setEditingEntry(prev => prev ? {...prev, weight: parseFloat(e.target.value)} : null)}
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <Button type="submit" className="w-full">Save Changes</Button>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                      <Button variant="outline" size="icon" onClick={() => duplicateEntry(entry)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeEntry(entry.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </li>
                 ))}
               </ul>
               <div className="bg-primary/10 p-4 rounded-lg space-y-2">
                 <div className="text-xl font-bold text-center">
-                  Current Grade: {calculateTotalGrade().toFixed(2)}%
+                  Current Grade: {calculateTotalGrade().toFixed(2)}% ({((calculateTotalGrade() / totalWeight) * 100).toFixed(2)}%)
                 </div>
                 <div className="text-center">
                   Total Weight: {totalWeight.toFixed(2)}%
