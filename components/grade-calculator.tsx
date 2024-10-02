@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Plus, Trash2, Moon, Sun, Edit, Copy, Calculator, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +43,7 @@ export default function GradeCalculatorComponent() {
   const [calculatorInput, setCalculatorInput] = useState("")
   const [calculatorResult, setCalculatorResult] = useState("")
   const { theme, setTheme } = useTheme()
+  const calculatorInputRef = useRef<HTMLInputElement>(null)
 
   const addEntry = (e: React.FormEvent) => {
     e.preventDefault()
@@ -164,6 +165,7 @@ export default function GradeCalculatorComponent() {
     try {
       const result = eval(calculatorInput)
       setCalculatorResult(result.toString())
+      setCalculatorInput("")
     } catch (error) {
       setCalculatorResult("Error")
     }
@@ -184,10 +186,27 @@ export default function GradeCalculatorComponent() {
     setError(null)
   }
 
+  const handleCalculatorKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      calculateResult()
+    } else if (e.key === "Escape") {
+      clearCalculator()
+    } else if (/^[0-9+\-*/.]$/.test(e.key)) {
+      e.preventDefault()
+      handleCalculatorInput(e.key)
+    }
+  }
+
+  useEffect(() => {
+    if (calculatorInputRef.current) {
+      calculatorInputRef.current.focus()
+    }
+  }, [])
+
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-background shadow-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="md:col-span-2 bg-background shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-2xl font-bold">Jebinks' Grade Calculator</CardTitle>
             <div className="flex items-center space-x-2">
@@ -386,8 +405,10 @@ export default function GradeCalculatorComponent() {
                 {calculatorResult || calculatorInput || '0'}
               </div>
               <Input
+                ref={calculatorInputRef}
                 value={calculatorInput}
                 onChange={(e) => setCalculatorInput(e.target.value)}
+                onKeyDown={handleCalculatorKeyDown}
                 placeholder="Enter calculation"
                 className="text-right text-lg"
               />
