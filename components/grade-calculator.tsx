@@ -27,7 +27,7 @@ interface ScoreEntry {
   score: number
   total: number
   weight: number
-  passingScore: number
+  passingScore?: number // Make passingScore optional
 }
 
 export default function GradeCalculatorComponent() {
@@ -47,18 +47,18 @@ export default function GradeCalculatorComponent() {
 
   const addEntry = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newScore && newTotal && newWeight && newPassingScore) {
+    if (newScore && newTotal && newWeight) {
       const score = parseFloat(newScore)
       const total = parseFloat(newTotal)
       const weight = parseFloat(newWeight)
-      const passingScore = parseFloat(newPassingScore)
+      const passingScore = newPassingScore ? parseFloat(newPassingScore) : undefined // Handle empty passingScore
 
       if (score > total) {
         setError("Score cannot be greater than total.")
         return
       }
 
-      if (passingScore > total) {
+      if (passingScore && passingScore > total) {
         setError("Passing score cannot be greater than total.")
         return
       }
@@ -115,6 +115,9 @@ export default function GradeCalculatorComponent() {
 
   const calculateAdjustedGrade = (entry: ScoreEntry) => {
     const { score, total, passingScore } = entry
+    if (passingScore === undefined) {
+      return (score / total) * 100
+    }
     if (score < passingScore) return 0
     return 25 / (total - passingScore) * (score - passingScore) + 75
   }
@@ -270,7 +273,6 @@ export default function GradeCalculatorComponent() {
                     placeholder="Enter passing score"
                     value={newPassingScore}
                     onChange={(e) => setNewPassingScore(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -309,9 +311,11 @@ export default function GradeCalculatorComponent() {
                         <span>
                           Weight: {entry.weight}%
                         </span>
-                        <span>
-                          Passing: {entry.passingScore}
-                        </span>
+                        {entry.passingScore && (
+                          <span>
+                            Passing: {entry.passingScore}
+                          </span>
+                        )}
                         <span className="font-semibold">
                           Adjusted Grade: {calculateAdjustedGrade(entry).toFixed(2)}%
                         </span>
