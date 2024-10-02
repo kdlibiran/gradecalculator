@@ -14,26 +14,34 @@ interface ScoreEntry {
   score: number
   total: number
   weight: number
+  passingScore: number
 }
 
-export function GradeCalculatorComponent() {
+export default function GradeCalculatorComponent() {
   const [entries, setEntries] = useState<ScoreEntry[]>([])
   const [newScore, setNewScore] = useState("")
   const [newTotal, setNewTotal] = useState("")
   const [newWeight, setNewWeight] = useState("")
+  const [newPassingScore, setNewPassingScore] = useState("")
   const [goalGrade, setGoalGrade] = useState("")
   const [error, setError] = useState<string | null>(null)
   const { theme, setTheme } = useTheme()
 
   const addEntry = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newScore && newTotal && newWeight) {
+    if (newScore && newTotal && newWeight && newPassingScore) {
       const score = parseFloat(newScore)
       const total = parseFloat(newTotal)
       const weight = parseFloat(newWeight)
+      const passingScore = parseFloat(newPassingScore)
 
       if (score > total) {
         setError("Score cannot be greater than total.")
+        return
+      }
+
+      if (passingScore > total) {
+        setError("Passing score cannot be greater than total.")
         return
       }
 
@@ -50,11 +58,13 @@ export function GradeCalculatorComponent() {
           score,
           total,
           weight,
+          passingScore,
         },
       ])
       setNewScore("")
       setNewTotal("")
       setNewWeight("")
+      setNewPassingScore("")
       setError(null)
     }
   }
@@ -63,8 +73,14 @@ export function GradeCalculatorComponent() {
     setEntries(entries.filter((entry) => entry.id !== id))
   }
 
+  const calculateAdjustedGrade = (entry: ScoreEntry) => {
+    const { score, total, passingScore } = entry
+    if (score < passingScore) return 0
+    return 25 / (total - passingScore) * (score - passingScore) + 75
+  }
+
   const calculateWeightedPercentage = (entry: ScoreEntry) => {
-    return ((entry.score / entry.total) * entry.weight)
+    return (calculateAdjustedGrade(entry) / 100) * entry.weight
   }
 
   const calculateTotalGrade = () => {
@@ -105,7 +121,7 @@ export function GradeCalculatorComponent() {
     <div className="container mx-auto p-4 max-w-2xl">
       <Card className="bg-background shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-3xl font-bold">Jebinks' Grade Calculator</CardTitle>
+          <CardTitle className="text-2xl font-bold">Jebinks' Grade Calculator</CardTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -118,7 +134,7 @@ export function GradeCalculatorComponent() {
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={addEntry} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="score">Score</Label>
                 <Input
@@ -138,6 +154,17 @@ export function GradeCalculatorComponent() {
                   placeholder="Enter total"
                   value={newTotal}
                   onChange={(e) => setNewTotal(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="passingScore">Passing Score</Label>
+                <Input
+                  id="passingScore"
+                  type="number"
+                  placeholder="Enter passing score"
+                  value={newPassingScore}
+                  onChange={(e) => setNewPassingScore(e.target.value)}
                   required
                 />
               </div>
@@ -176,6 +203,12 @@ export function GradeCalculatorComponent() {
                       </span>
                       <span>
                         Weight: {entry.weight}%
+                      </span>
+                      <span>
+                        Passing: {entry.passingScore}
+                      </span>
+                      <span className="font-semibold">
+                        Adjusted Grade: {calculateAdjustedGrade(entry).toFixed(2)}%
                       </span>
                       <span className="font-semibold">
                         Weighted %: {calculateWeightedPercentage(entry).toFixed(2)}%
