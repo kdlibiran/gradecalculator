@@ -118,8 +118,10 @@ export default function GradeCalculatorComponent() {
     if (passingScore === undefined) {
       return (score / total) * 100
     }
-    if (score < passingScore) return 0
-    return 25 / (total - passingScore) * (score - passingScore) + 75
+    if (score < passingScore) {
+      return (75 / passingScore) * score
+    }
+    return (25 / (total - passingScore)) * (score - passingScore) + 75
   }
 
   const calculateWeightedPercentage = (entry: ScoreEntry) => {
